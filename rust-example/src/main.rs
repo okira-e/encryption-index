@@ -1,18 +1,22 @@
 use aes_gcm::{aead::Aead, Aes256Gcm, Error, Key, KeyInit, Nonce};
 use anyhow::bail;
-use rand::RngCore;
+use rand::{distributions::Alphanumeric, thread_rng, Rng, RngCore};
 
+fn generate_utf8_key() -> String {
+    let mut rng = thread_rng();
+
+    // Generate a string of 32 characters using the Alphanumeric distribution
+    let key: String = (0..32).map(|_| rng.sample(Alphanumeric) as char).collect();
+    
+    return key;
+}
 
 fn main() {
-    let key: [u8; 32] = [
-        216, 36, 172, 61, 254, 169, 189, 251, 
-        145, 87, 189, 176, 100, 228, 131, 168, 
-        103, 58, 153, 212, 47, 166, 17, 61, 
-        52, 60, 228, 30, 234, 54, 249, 233
-    ]; // 32 bytes key for AES256.
+    let key = generate_utf8_key();
 
-    let message = "Hi there!";
-    let (encrypted, nonce) = match encrypt(message, &key) {
+    let message = "Superman is Clark Kent!";
+
+    let (encrypted, nonce) = match encrypt(message, key.as_bytes()) {
         Ok(val) => {
             val
         }, 
@@ -21,7 +25,7 @@ fn main() {
         }
     };
     
-    let decrypted_message = match decrypt(&key, &nonce, encrypted.as_slice()) {
+    let decrypted_message = match decrypt(key.as_bytes(), &nonce, encrypted.as_slice()) {
         Ok(val) => { 
             val
         }, 
